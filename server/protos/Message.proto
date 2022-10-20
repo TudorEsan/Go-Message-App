@@ -1,12 +1,12 @@
 syntax = "proto3";
-package message;
-option go_package = "./";
+option go_package = "github.com/tudoresan/Go-Message-App/protos/protoMessage";
 
 
 service MessageService {
   rpc ConnectUsers (stream Message) returns (stream Message) {}
   rpc PermissionToConnect (Message) returns (Message) {}
-  
+  rpc ConnectToChannel (Message) returns (Message) {}
+  rpc Ping(Empty) returns (PingResponse) {}
 }
 
 message Message {
@@ -17,3 +17,9 @@ message Message {
     string toUserId = 5;
     int64 timestamp = 6;
 }
+
+message PingResponse {
+  string message = 1;
+}
+
+message Empty {}
