@@ -4,7 +4,7 @@
 // - protoc             v3.21.7
 // source: protos/Message.proto
 
-package __
+package protoMessage
 
 import (
 	context "context"
@@ -24,6 +24,8 @@ const _ = grpc.SupportPackageIsVersion7
 type MessageServiceClient interface {
 	ConnectUsers(ctx context.Context, opts ...grpc.CallOption) (MessageService_ConnectUsersClient, error)
 	PermissionToConnect(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error)
+	ConnectToChannel(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error)
+	Ping(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PingResponse, error)
 }
 
 type messageServiceClient struct {
@@ -35,7 +37,7 @@ func NewMessageServiceClient(cc grpc.ClientConnInterface) MessageServiceClient {
 }
 
 func (c *messageServiceClient) ConnectUsers(ctx context.Context, opts ...grpc.CallOption) (MessageService_ConnectUsersClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MessageService_ServiceDesc.Streams[0], "/message.MessageService/ConnectUsers", opts...)
+	stream, err := c.cc.NewStream(ctx, &MessageService_ServiceDesc.Streams[0], "/MessageService/ConnectUsers", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +69,25 @@ func (x *messageServiceConnectUsersClient) Recv() (*Message, error) {
 
 func (c *messageServiceClient) PermissionToConnect(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error) {
 	out := new(Message)
-	err := c.cc.Invoke(ctx, "/message.MessageService/PermissionToConnect", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/MessageService/PermissionToConnect", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *messageServiceClient) ConnectToChannel(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error) {
+	out := new(Message)
+	err := c.cc.Invoke(ctx, "/MessageService/ConnectToChannel", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *messageServiceClient) Ping(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PingResponse, error) {
+	out := new(PingResponse)
+	err := c.cc.Invoke(ctx, "/MessageService/Ping", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -80,6 +100,8 @@ func (c *messageServiceClient) PermissionToConnect(ctx context.Context, in *Mess
 type MessageServiceServer interface {
 	ConnectUsers(MessageService_ConnectUsersServer) error
 	PermissionToConnect(context.Context, *Message) (*Message, error)
+	ConnectToChannel(context.Context, *Message) (*Message, error)
+	Ping(context.Context, *Empty) (*PingResponse, error)
 	mustEmbedUnimplementedMessageServiceServer()
 }
 
@@ -92,6 +114,12 @@ func (UnimplementedMessageServiceServer) ConnectUsers(MessageService_ConnectUser
 }
 func (UnimplementedMessageServiceServer) PermissionToConnect(context.Context, *Message) (*Message, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PermissionToConnect not implemented")
+}
+func (UnimplementedMessageServiceServer) ConnectToChannel(context.Context, *Message) (*Message, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConnectToChannel not implemented")
+}
+func (UnimplementedMessageServiceServer) Ping(context.Context, *Empty) (*PingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
 func (UnimplementedMessageServiceServer) mustEmbedUnimplementedMessageServiceServer() {}
 
@@ -142,10 +170,46 @@ func _MessageService_PermissionToConnect_Handler(srv interface{}, ctx context.Co
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/message.MessageService/PermissionToConnect",
+		FullMethod: "/MessageService/PermissionToConnect",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MessageServiceServer).PermissionToConnect(ctx, req.(*Message))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MessageService_ConnectToChannel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Message)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MessageServiceServer).ConnectToChannel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/MessageService/ConnectToChannel",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MessageServiceServer).ConnectToChannel(ctx, req.(*Message))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MessageService_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MessageServiceServer).Ping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/MessageService/Ping",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MessageServiceServer).Ping(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -154,12 +218,20 @@ func _MessageService_PermissionToConnect_Handler(srv interface{}, ctx context.Co
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var MessageService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "message.MessageService",
+	ServiceName: "MessageService",
 	HandlerType: (*MessageServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "PermissionToConnect",
 			Handler:    _MessageService_PermissionToConnect_Handler,
+		},
+		{
+			MethodName: "ConnectToChannel",
+			Handler:    _MessageService_ConnectToChannel_Handler,
+		},
+		{
+			MethodName: "Ping",
+			Handler:    _MessageService_Ping_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
