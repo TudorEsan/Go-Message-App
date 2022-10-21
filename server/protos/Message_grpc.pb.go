@@ -26,6 +26,9 @@ type MessageServiceClient interface {
 	PermissionToConnect(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error)
 	ConnectToChannel(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error)
 	Ping(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PingResponse, error)
+	ConnectToMessageChannel(ctx context.Context, in *User, opts ...grpc.CallOption) (MessageService_ConnectToMessageChannelClient, error)
+	OnlineUsers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*OnlineUsersResp, error)
+	SendMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*SendMessageResp, error)
 }
 
 type messageServiceClient struct {
@@ -94,6 +97,56 @@ func (c *messageServiceClient) Ping(ctx context.Context, in *Empty, opts ...grpc
 	return out, nil
 }
 
+func (c *messageServiceClient) ConnectToMessageChannel(ctx context.Context, in *User, opts ...grpc.CallOption) (MessageService_ConnectToMessageChannelClient, error) {
+	stream, err := c.cc.NewStream(ctx, &MessageService_ServiceDesc.Streams[1], "/MessageService/ConnectToMessageChannel", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &messageServiceConnectToMessageChannelClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type MessageService_ConnectToMessageChannelClient interface {
+	Recv() (*Message, error)
+	grpc.ClientStream
+}
+
+type messageServiceConnectToMessageChannelClient struct {
+	grpc.ClientStream
+}
+
+func (x *messageServiceConnectToMessageChannelClient) Recv() (*Message, error) {
+	m := new(Message)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *messageServiceClient) OnlineUsers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*OnlineUsersResp, error) {
+	out := new(OnlineUsersResp)
+	err := c.cc.Invoke(ctx, "/MessageService/OnlineUsers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *messageServiceClient) SendMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*SendMessageResp, error) {
+	out := new(SendMessageResp)
+	err := c.cc.Invoke(ctx, "/MessageService/SendMessage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MessageServiceServer is the server API for MessageService service.
 // All implementations must embed UnimplementedMessageServiceServer
 // for forward compatibility
@@ -102,6 +155,9 @@ type MessageServiceServer interface {
 	PermissionToConnect(context.Context, *Message) (*Message, error)
 	ConnectToChannel(context.Context, *Message) (*Message, error)
 	Ping(context.Context, *Empty) (*PingResponse, error)
+	ConnectToMessageChannel(*User, MessageService_ConnectToMessageChannelServer) error
+	OnlineUsers(context.Context, *Empty) (*OnlineUsersResp, error)
+	SendMessage(context.Context, *Message) (*SendMessageResp, error)
 	mustEmbedUnimplementedMessageServiceServer()
 }
 
@@ -120,6 +176,15 @@ func (UnimplementedMessageServiceServer) ConnectToChannel(context.Context, *Mess
 }
 func (UnimplementedMessageServiceServer) Ping(context.Context, *Empty) (*PingResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+}
+func (UnimplementedMessageServiceServer) ConnectToMessageChannel(*User, MessageService_ConnectToMessageChannelServer) error {
+	return status.Errorf(codes.Unimplemented, "method ConnectToMessageChannel not implemented")
+}
+func (UnimplementedMessageServiceServer) OnlineUsers(context.Context, *Empty) (*OnlineUsersResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OnlineUsers not implemented")
+}
+func (UnimplementedMessageServiceServer) SendMessage(context.Context, *Message) (*SendMessageResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendMessage not implemented")
 }
 func (UnimplementedMessageServiceServer) mustEmbedUnimplementedMessageServiceServer() {}
 
@@ -214,6 +279,63 @@ func _MessageService_Ping_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MessageService_ConnectToMessageChannel_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(User)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(MessageServiceServer).ConnectToMessageChannel(m, &messageServiceConnectToMessageChannelServer{stream})
+}
+
+type MessageService_ConnectToMessageChannelServer interface {
+	Send(*Message) error
+	grpc.ServerStream
+}
+
+type messageServiceConnectToMessageChannelServer struct {
+	grpc.ServerStream
+}
+
+func (x *messageServiceConnectToMessageChannelServer) Send(m *Message) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _MessageService_OnlineUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MessageServiceServer).OnlineUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/MessageService/OnlineUsers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MessageServiceServer).OnlineUsers(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MessageService_SendMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Message)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MessageServiceServer).SendMessage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/MessageService/SendMessage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MessageServiceServer).SendMessage(ctx, req.(*Message))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MessageService_ServiceDesc is the grpc.ServiceDesc for MessageService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -233,6 +355,14 @@ var MessageService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Ping",
 			Handler:    _MessageService_Ping_Handler,
 		},
+		{
+			MethodName: "OnlineUsers",
+			Handler:    _MessageService_OnlineUsers_Handler,
+		},
+		{
+			MethodName: "SendMessage",
+			Handler:    _MessageService_SendMessage_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -240,6 +370,11 @@ var MessageService_ServiceDesc = grpc.ServiceDesc{
 			Handler:       _MessageService_ConnectUsers_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
+		},
+		{
+			StreamName:    "ConnectToMessageChannel",
+			Handler:       _MessageService_ConnectToMessageChannel_Handler,
+			ServerStreams: true,
 		},
 	},
 	Metadata: "protos/Message.proto",

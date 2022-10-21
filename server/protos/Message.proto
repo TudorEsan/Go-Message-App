@@ -7,6 +7,22 @@ service MessageService {
   rpc PermissionToConnect (Message) returns (Message) {}
   rpc ConnectToChannel (Message) returns (Message) {}
   rpc Ping(Empty) returns (PingResponse) {}
+  rpc ConnectToMessageChannel (User) returns (stream Message) {}
+  rpc OnlineUsers (Empty) returns (OnlineUsersResp) {}
+  rpc SendMessage (Message) returns (SendMessageResp) {}
+}
+
+message SendMessageResp {
+  string status = 1;
+}
+
+message OnlineUsersResp {
+  repeated User users = 1; 
+}
+
+message User {
+  string username = 1;
+  string id = 2;
 }
 
 message Message {

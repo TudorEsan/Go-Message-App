@@ -6,11 +6,17 @@ import (
 )
 
 func NewMessageService() pb.MessageServiceServer {
-	return &MessageService{}
+	return &MessageService{
+		onlineUsers:  make(map[string]pb.User),
+		messageStream: make(map[string]pb.MessageService_ConnectToMessageChannelServer),
+	}
 }
 
 type MessageService struct {
 	pb.UnimplementedMessageServiceServer
+	onlineUsers map[string]pb.User
+	userMessageChannel map[string]chan pb.Message
+	messageStream map[string]pb.MessageService_ConnectToMessageChannelServer
 }
 
 func (m *MessageService) Ping(context.Context, *pb.Empty) (*pb.PingResponse, error) {
@@ -24,5 +30,18 @@ func (m *MessageService) ConnectUsers(pb.MessageService_ConnectUsersServer) erro
 }
 
 func (m *MessageService) PermissionToConnect(context.Context, *pb.Message) (*pb.Message, error) {
+	
 	return nil, nil
 }
+
+func (m *MessageService) SendMessage(context.Context, *pb.Message) (*pb.SendMessageResp, error) {
+	return nil, nil
+}
+
+func (m *MessageService) ConnectToMessageChannel(empty *pb.User, messageService pb.MessageService_ConnectToMessageChannelServer) error {
+	go func() {
+		messageService.R
+	}()
+	return nil
+}
+
